@@ -1,191 +1,173 @@
-import React, { useRef, useState } from 'react';
-import {
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import 'react-native-gesture-handler';
-import {
-  PanGestureHandler,
-  PinchGestureHandler,
-  State,
-  TapGestureHandler,
-} from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import Svg, { Circle } from 'react-native-svg';
+// TestImageScreen.tsx
+// import React from 'react';
+// import { Image, StyleSheet, Text, View } from 'react-native';
 
-// Colores de las 9 donas
-const COLORS = [
-  '#EF4444',
-  '#F97316',
-  '#FACC15',
-  '#4ADE80',
-  '#22D3EE',
-  '#3B82F6',
-  '#8B5CF6',
-  '#EC4899',
-  '#A855F7',
-];
+// export default function TestImageScreen() {
+//   return (
+//     <View style={styles.container}>
+//       {/* Si la imagen no carga verás el fondo rosa */}
+//       <Image
+//         // Ajusta la ruta según dónde esté este archivo (ver instrucciones abajo)
+//         source={require('../../assets/images/ruedita_png.png')}
+ //        style={styles.image}
+ //        resizeMode="contain"
+ //      />
+// 
+ //      {/* Mensaje opcional para depurar */}
+ //      <Text style={styles.hint}>Para más información, haz doble click sobre cada sección de color</Text>
+ //    </View>
+ //  );
+// }
 
-export default function DiagramaInteractivo() {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selected, setSelected] = useState<number | null>(null);
+//const styles = StyleSheet.create({
+  //container: { flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
+  //image: { width: '100%', height: '100%', backgroundColor: 'white' }, // fondo rosa si no carga la imagen
+ // hint: { position: 'absolute', bottom: 20, color: '#666' },
+//});
 
-  const scale = useSharedValue(1);
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
 
-  const lastPan = useRef({ x: 0, y: 0 });
-  const isPanning = useRef(false);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: withTiming(translateX.value) },
-      { translateY: withTiming(translateY.value) },
-      { scale: withTiming(scale.value) },
-    ],
-  }));
 
-  const handlePress = (index: number) => {
-    setSelected(index);
-    setModalVisible(true);
-  };
+//import React from 'react';
+//import { Dimensions, Image, StyleSheet, View } from 'react-native';
+//import ImageZoom from 'react-native-image-pan-zoom';
 
-  // --- Web Handlers ---
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.95 : 1.05;
-    scale.value = scale.value * delta;
-  };
+//const { width, height } = Dimensions.get('window');
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    isPanning.current = true;
-    lastPan.current = { x: e.clientX, y: e.clientY };
-  };
+//export default function HomeScreen() {
+  // Ajusta el tamaño de la imagen original para poder hacer zoom
+ // const imageWidth = width * 2;  // 2 veces el ancho de pantalla
+ // const imageHeight = height * 2; // 2 veces el alto de pantalla
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isPanning.current) return;
-    const dx = e.clientX - lastPan.current.x;
-    const dy = e.clientY - lastPan.current.y;
-    translateX.value += dx;
-    translateY.value += dy;
-    lastPan.current = { x: e.clientX, y: e.clientY };
-  };
+ // return (
+ //   <View style={styles.container}>
+  //    <ImageZoom
+  //      {...{
+  //        cropWidth: width,
+   //       cropHeight: height,
+   //       imageWidth,
+     //     imageHeight,
+   //       minScale: 1,
+    //      maxScale: 3,
+   //       enableCenterFocus: true,
+   //     } as any} // cast a any para TS
+   //   >
+   //     <Image
+    //      source={require('../../assets/images/ruedita_png.png')}
+    //      style={{ width: imageWidth, height: imageHeight }}
+   //       resizeMode="contain"
+   //     />
+   //   </ImageZoom>
+  //  </View>
+ // );
+//}
 
-  const handleMouseUp = () => {
-    isPanning.current = false;
-  };
+//const styles = StyleSheet.create({
+ // container: {
+  //  flex: 1,
+  //  backgroundColor: 'white',
+  //},
+//});
 
-  const handleDoubleClickWeb = (e: React.MouseEvent) => {
-    const { offsetX, offsetY } = e.nativeEvent;
-    const dx = offsetX - 500;
-    const dy = offsetY - 500;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    COLORS.forEach((_, i) => {
-      const r = 100 + i * 40;
-      const halfStroke = 17.5;
-      if (dist >= r - halfStroke && dist <= r + halfStroke) {
-        handlePress(i);
-      }
-    });
-  };
+
+import React, { useState } from 'react';
+import { Dimensions, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+// @ts-ignore
+import ImageZoom from 'react-native-image-pan-zoom';
+
+export default function HomeScreen() {
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const screenWidth = Dimensions.get('window').width;
+  const screenHeight = Dimensions.get('window').height;
+
+  const size = screenWidth * 0.8;
+
+  const categories = [
+    { name: 'Inicio', color: '#0a0a0aff' },
+    { name: 'Neurotoxicidad', color: '#fc75ff' },
+    { name: 'Reacción vagal', color: '#ffced2' },
+    { name: 'Clasificación del edema', color: '#b9ecd3' },
+    { name: 'Daño tisular local', color: '#deceff' },
+    { name: 'Coagulación y circulación sistémica', color: '#ff99ff' },
+    { name: 'Alteraciones renales cualitativas', color: '#fffbdd' },
+    { name: 'Exámenes paraclínicos complementarios', color: '#ebebeb' },
+    { name: 'Clasificación y tratamiento', color: '#5ce1e6' }
+  ];
 
   return (
-    <View
-      style={styles.container}
-      {...(Platform.OS === 'web'
-        ? {
-            onWheel: handleWheel,
-            onMouseDown: handleMouseDown,
-            onMouseMove: handleMouseMove,
-            onMouseUp: handleMouseUp,
-          }
-        : {})}
-    >
-      {Platform.OS === 'web' ? (
-        <div style={{ width: '100%', height: '100vh' }} onDoubleClick={handleDoubleClickWeb}>
-          <Animated.View style={[{ flex: 1 }, animatedStyle]}>
-            <Svg width="100%" height="100%" viewBox="0 0 1000 1000">
-              {COLORS.map((color, i) => (
-                <Circle
-                  key={i}
-                  cx={500}
-                  cy={500}
-                  r={100 + i * 40}
-                  stroke={color}       // color visible de la dona
-                  strokeWidth={35}     // grosor de la dona
-                  fill="transparent"   // hueco central
-                />
-              ))}
-            </Svg>
-          </Animated.View>
-        </div>
-      ) : (
-        <PanGestureHandler
-          onGestureEvent={(e) => {
-            translateX.value += e.nativeEvent.translationX;
-            translateY.value += e.nativeEvent.translationY;
-          }}
+    <View style={styles.container}>
+      {/* Título principal */}
+      <Text style={styles.titleMain}>
+        Código ofídico: diagnóstico según síntomas del paciente{"\n"}y hallazgos clínicos
+      </Text>
+
+      {/* Diagrama con zoom en contenedor rectangular que ocupa todo el ancho */}
+      <View style={styles.diagramBackground}>
+        <ImageZoom
+          cropWidth={screenWidth}
+          cropHeight={screenHeight * 0.5}
+          imageWidth={size}
+          imageHeight={size}
+          minScale={1}
+          maxScale={5}
+          enableCenterFocus={false}
         >
-          <PinchGestureHandler
-            onGestureEvent={(e) => {
-              scale.value = e.nativeEvent.scale;
-            }}
+          <Image
+            source={require('../../assets/images/ruedita_png.png')}
+            style={{ width: size, height: size, borderRadius: size / 2 }}
+            resizeMode="contain"
+          />
+        </ImageZoom>
+      </View>
+
+      {/* Título del menú */}
+      <Text style={styles.subtitle}>Información complementaria</Text>
+
+      {/* Botones horizontales */}
+      <ScrollView
+        horizontal
+        style={styles.menu}
+        contentContainerStyle={{ paddingHorizontal: 10 }}
+        showsHorizontalScrollIndicator={false}
+      >
+        {categories.map(cat => (
+          <Pressable
+            key={cat.name}
+            style={[styles.button, { backgroundColor: cat.color }]}
+            onPress={() => setSelected(cat.name)}
           >
-            <Animated.View style={[{ flex: 1 }, animatedStyle]}>
-              <Svg width="100%" height="100%" viewBox="0 0 1000 1000">
-                {COLORS.map((color, i) => (
-                  <TapGestureHandler
-                    key={i}
-                    numberOfTaps={2}
-                    onHandlerStateChange={(event) => {
-                      if (event.nativeEvent.state === State.ACTIVE) {
-                        handlePress(i);
-                      }
-                    }}
-                  >
-                    <Animated.View>
-                      <Circle
-                        cx={500}
-                        cy={500}
-                        r={100 + i * 40}
-                        stroke={color}
-                        strokeWidth={35}
-                        fill="transparent"
-                      />
-                    </Animated.View>
-                  </TapGestureHandler>
-                ))}
-              </Svg>
-            </Animated.View>
-          </PinchGestureHandler>
-        </PanGestureHandler>
-      )}
+            <Text
+              style={[
+                styles.buttonText,
+                { color: cat.name === 'Inicio' ? 'white' : 'black' },
+              ]}
+            >
+              {cat.name}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
 
       {/* Modal de información */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+      <Modal visible={!!selected} transparent animationType="fade">
+        <View style={styles.modalBackground}>
           <View style={styles.modalBox}>
-            {selected !== null && (
-              <>
-                <Text style={styles.modalTitle}>Dona {selected + 1}</Text>
-                <ScrollView style={{ maxHeight: 250 }}>
-                  <Text style={styles.modalText}>
-                    Información detallada sobre la dona {selected + 1}. Puedes incluir texto, imágenes o datos relevantes.
-                  </Text>
-                </ScrollView>
-              </>
-            )}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeText}>Cerrar</Text>
-            </TouchableOpacity>
+            <ScrollView style={{ maxHeight: '80%' }}>
+              <Text style={styles.modalTitle}>{selected}</Text>
+              <Text>
+                Información complementaria sobre {selected}.{"\n\n"}
+                {/* Aquí puedes añadir mucho más texto y se hará scroll automáticamente */}
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur ut
+                risus sed sapien suscipit hendrerit. Proin tincidunt, sem non
+                hendrerit sollicitudin, velit ligula commodo purus, in consequat
+                nulla urna eget turpis. Donec non ligula vitae libero pharetra
+                efficitur. Etiam vel purus ut lorem dignissim sodales. 
+              </Text>
+            </ScrollView>
+            <Text style={styles.close} onPress={() => setSelected(null)}>
+              Cerrar
+            </Text>
           </View>
         </View>
       </Modal>
@@ -194,30 +176,77 @@ export default function DiagramaInteractivo() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  modalOverlay: {
+  container: {
+    flex: 1,
+    backgroundColor: 'white', // fondo azul clarito
+    alignItems: 'center',
+    paddingTop: 40,
+  },
+  titleMain: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  diagramBackground: {
+    backgroundColor: '#d7ebe4', // fondo blanco del diagrama
+    width: '100%', // ocupa todo el ancho de la pantalla
+    paddingVertical: 10,
+    alignItems: 'center', // centra la imagen dentro del rectángulo
+    marginBottom: 20,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  menu: {
+    maxHeight: 80,
+    marginBottom: 30,
+  },
+  button: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    maxWidth: 140,
+  },
+  buttonText: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalBackground: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalBox: {
-    backgroundColor: '#fff',
+    backgroundColor: '#cce7ff',
     padding: 20,
-    borderRadius: 20,
-    width: '80%',
-    alignItems: 'center',
-  },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  modalText: { fontSize: 14, marginBottom: 10, textAlign: 'justify' },
-  closeButton: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 10,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  close: {
+    color: 'blue',
+    textAlign: 'right',
     marginTop: 10,
   },
-  closeText: { color: '#fff', fontWeight: 'bold' },
 });
+
+
+
+
+
+
 
 
