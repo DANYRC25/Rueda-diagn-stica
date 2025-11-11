@@ -10,21 +10,21 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 // @ts-ignore
-import { Maximize2 } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Maximize2, Menu, Square } from "lucide-react-native";
 import ImageZoom from "react-native-image-pan-zoom";
 
 export default function HomeScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [contentHeight, setContentHeight] = useState(1);
-  const [containerHeight, setContainerHeight] = useState(1);
+  const [menuState, setMenuState] = useState<"normal" | "full" | "min">("normal");
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const [resetTrigger, setResetTrigger] = useState(0);
 
   const zoomRef = useRef<any>(null);
-  const [resetTrigger, setResetTrigger] = useState(0);
-  const [rotation, setRotation] = useState(0);
 
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
@@ -42,33 +42,44 @@ export default function HomeScreen() {
     { name: "Clasificación y tratamiento", color: "#5ce1e6" },
   ];
 
-  const handleResetZoom = () => setResetTrigger((prev) => prev + 1);
+  const handleResetZoom = () => setResetTrigger((p) => p + 1);
   const handleResetRotation = () => setRotation(0);
+  const handleZoomChange = (scale: number) => setIsZoomed(scale > 1.05);
 
   return (
     <View style={styles.container}>
-      {/* 🔹 Controles superiores */}
+      {/* 🔹 Controles de rotación y zoom */}
       <View style={styles.topControls}>
         <View style={styles.rotationControls}>
           <TouchableOpacity onPress={() => setRotation((r) => r - 30)}>
-            <Text style={styles.rotationText}>↺ 30°</Text>
+            <Text style={styles.rotationText}>↺</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleResetRotation}>
-            <Text style={styles.rotationTextCenter}>0°</Text>
+            <Text
+              style={[
+                styles.rotationTextCenter,
+                { color: rotation === 0 ? "#888" : "#007aff" },
+              ]}
+            >
+              0°
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => setRotation((r) => r + 30)}>
-            <Text style={styles.rotationText}>↻ 30°</Text>
+            <Text style={styles.rotationText}>↻</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.resetButton} onPress={handleResetZoom}>
-          <Maximize2 size={20} color="#007aff" />
+        <TouchableOpacity
+          style={[styles.resetButton, { backgroundColor: isZoomed ? "white" : "#e0e0e0" }]}
+          onPress={handleResetZoom}
+        >
+          <Maximize2 size={20} color={isZoomed ? "#007aff" : "#888"} />
         </TouchableOpacity>
       </View>
 
-      {/* Diagrama */}
+      {/* 🔹 Diagrama */}
       <View style={styles.diagramBackground}>
         <View
           style={{
@@ -90,6 +101,7 @@ export default function HomeScreen() {
             maxScale={5}
             enableCenterFocus={false}
             style={{ overflow: "visible" }}
+            onMove={(e: any) => handleZoomChange(e.scale)}
           >
             <Animated.Image
               source={require("../../assets/images/ruedita_png.png")}
@@ -106,92 +118,131 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Menú scrollable con recuadro blanco */}
-      <View
-        style={styles.menuContainer}
-        onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
-      >
-        {/* Difuminado superior */}
-        <LinearGradient
-          colors={["white", "rgba(255,255,255,0)"]}
-          style={[styles.gradientOverlay, { top: 0 }]}
-          pointerEvents="none"
-        />
-
-        <Animated.ScrollView
-          style={styles.menu}
-          contentContainerStyle={{
-            paddingVertical: 10,
-            alignItems: "center",
-            paddingRight: 4,
-          }}
-          showsVerticalScrollIndicator={true}
-          persistentScrollbar={true}
-          indicatorStyle="black"
-          scrollEventThrottle={16}
-          onContentSizeChange={(w, h) => setContentHeight(h)}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
-          )}
+      {/* 🔹 Menú blanco (información complementaria) */}
+      {menuState !== "min" && (
+        <View
+          style={[
+            styles.menuContainer,
+            menuState === "full" && {
+              position: "absolute",
+              top: 70,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              borderRadius: 0,
+              paddingTop: 80,
+              zIndex: 30,
+            },
+          ]}
         >
-          {/* Título dentro del recuadro */}
-          <View style={styles.stickyHeader}>
-            <Text style={styles.sectionTitleMenu}>
-              Información complementaria de cada categoría
-            </Text>
+          {/* Botones de control del menú */}
+          <View style={[styles.menuButtonsGroup, { top: 10 }]}>
+            <TouchableOpacity
+              style={[styles.menuButton, { backgroundColor: "rgba(255,255,255,0.9)" }]}
+              onPress={() => setMenuState("min")}
+            >
+              <ChevronDown size={18} color="#007aff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.menuButton, { backgroundColor: "rgba(255,255,255,0.9)" }]}
+              onPress={() => setMenuState("normal")}
+            >
+              <Square size={18} color="#007aff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.menuButton, { backgroundColor: "rgba(255,255,255,0.9)" }]}
+              onPress={() => setMenuState("full")}
+            >
+              <ChevronUp size={18} color="#007aff" />
+            </TouchableOpacity>
           </View>
 
-          {categories.map((cat) => (
-            <Pressable
-              key={cat.name}
-              style={[styles.button, { backgroundColor: cat.color }]}
-              onPress={() => setSelected(cat.name)}
-            >
-              <Text
-                style={[
-                  styles.buttonText,
-                  { color: cat.name === "Inicio" ? "white" : "black" },
-                ]}
-              >
-                {cat.name}
+          <LinearGradient
+            colors={["white", "rgba(255,255,255,0)"]}
+            style={[styles.gradientOverlay, { top: 0 }]}
+            pointerEvents="none"
+          />
+
+          {/* Contenido del menú */}
+          <Animated.ScrollView
+            style={styles.menu}
+            contentContainerStyle={{
+              paddingVertical: 10,
+              alignItems: "center",
+              paddingRight: 4,
+            }}
+            showsVerticalScrollIndicator={true}
+            persistentScrollbar={true}
+            indicatorStyle="black"
+            scrollEventThrottle={16}
+          >
+            <View style={styles.stickyHeader}>
+              <Text style={styles.sectionTitleMenu}>
+                Información complementaria de cada categoría
               </Text>
-            </Pressable>
-          ))}
-        </Animated.ScrollView>
+            </View>
 
-        {/* Difuminado inferior */}
-        <LinearGradient
-          colors={["rgba(255,255,255,0)", "white"]}
-          style={[styles.gradientOverlay, { bottom: 0 }]}
-          pointerEvents="none"
-        />
-      </View>
+            {categories.map((cat) => (
+              <Pressable
+                key={cat.name}
+                style={[styles.button, { backgroundColor: cat.color }]}
+                onPress={() => setSelected(cat.name)}
+              >
+                <Text
+                  style={[styles.buttonText, { color: cat.name === "Inicio" ? "white" : "black" }]}
+                >
+                  {cat.name}
+                </Text>
+              </Pressable>
+            ))}
+          </Animated.ScrollView>
 
-      {/* Modal */}
+          <LinearGradient
+            colors={["rgba(255,255,255,0)", "white"]}
+            style={[styles.gradientOverlay, { bottom: 0 }]}
+            pointerEvents="none"
+          />
+        </View>
+      )}
+
+      {/* 🔹 Botón flotante cuando está minimizado */}
+      {menuState === "min" && (
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => setMenuState("normal")}
+        >
+          <Menu size={22} color="white" />
+        </TouchableOpacity>
+      )}
+
+      {/* 🔹 Modal de información por categoría */}
       <Modal visible={!!selected} transparent animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.modalBox}>
             <ScrollView style={{ maxHeight: "80%" }}>
               <Text style={styles.modalTitle}>{selected}</Text>
               <Text style={styles.modalText}>
-                El sangrado puede ser nulo, local o a distancia. En caso de sangrado a distancia se espera encontrar alteraciones que indiquen envenenamiento sistémico, tales como las siguientes:
+                El sangrado puede ser nulo, local o a distancia. En caso de
+                sangrado a distancia se espera encontrar alteraciones que
+                indiquen envenenamiento sistémico, tales como las siguientes:
               </Text>
               <View style={{ paddingLeft: 10, marginVertical: 5 }}>
-                <Text style={styles.bullet}>• Gingivorragia (sangrado en las encías)</Text>
-                <Text style={styles.bullet}>• Epistaxis (sangrado nasal)</Text>
-                <Text style={styles.bullet}>• Hematuria (orina sanguinolenta)</Text>
-                <Text style={styles.bullet}>• Melena o hematemesis (tracto gastrointestinal)</Text>
-                <Text style={styles.bullet}>• Equimosis o petequias en piel no relacionada con la mordedura</Text>
-                <Text style={styles.bullet}>• Sangrado conjuntival o subconjuntival</Text>
-                <Text style={styles.bullet}>• Sangrado en sitios de venopunción</Text>
+                <Text style={styles.bullet}>• Gingivorragia</Text>
+                <Text style={styles.bullet}>• Epistaxis</Text>
+                <Text style={styles.bullet}>• Hematuria</Text>
+                <Text style={styles.bullet}>• Melena o hematemesis</Text>
+                <Text style={styles.bullet}>• Equimosis o petequias</Text>
               </View>
-              <Text style={styles.modalText}>
-                En casos graves se puede generar compromiso hemodinámico, lo cual incluye estado de shock hipovolémico, coagulación intravascular diseminada e incluso sangrado en el sistema nervioso central.
-              </Text>
               <Image
                 source={require("../../assets/images/placeholder.png")}
-                style={{ width: "100%", height: 200, marginTop: 15, borderRadius: 10 }}
+                style={{
+                  width: "100%",
+                  height: 200,
+                  marginTop: 15,
+                  borderRadius: 10,
+                }}
                 resizeMode="cover"
               />
             </ScrollView>
@@ -243,7 +294,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   resetButton: {
-    backgroundColor: "white",
     borderRadius: 25,
     padding: 8,
     shadowColor: "#000",
@@ -254,13 +304,12 @@ const styles = StyleSheet.create({
   },
   rotationText: {
     fontSize: 16,
-    color: "#007aff",
     fontWeight: "bold",
     marginHorizontal: 6,
+    color: "#007aff", // siempre azul
   },
   rotationTextCenter: {
     fontSize: 16,
-    color: "#007aff",
     fontWeight: "bold",
     marginHorizontal: 8,
     borderLeftWidth: 1,
@@ -274,8 +323,20 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingTop: 10,
+    paddingTop: 20,
     position: "relative",
+  },
+  menuButtonsGroup: {
+    position: "absolute",
+    right: 12,
+    flexDirection: "row",
+    zIndex: 40,
+  },
+  menuButton: {
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderRadius: 20,
+    padding: 6,
+    marginLeft: 6,
   },
   menu: {
     flex: 1,
@@ -315,6 +376,15 @@ const styles = StyleSheet.create({
     right: 0,
     height: 35,
     zIndex: 1,
+  },
+  floatingButton: {
+    position: "absolute",
+    bottom: 60,
+    right: 25,
+    backgroundColor: "#007aff",
+    padding: 14,
+    borderRadius: 30,
+    elevation: 6,
   },
   modalBackground: {
     flex: 1,
