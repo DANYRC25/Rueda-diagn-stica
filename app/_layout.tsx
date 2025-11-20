@@ -1,3 +1,5 @@
+//Creo que este layout no es importante
+
 // RootLayout
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
